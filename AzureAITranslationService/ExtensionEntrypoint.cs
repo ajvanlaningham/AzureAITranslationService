@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.Extensibility;
+using ResxExporter; // Add this using directive to reference the ExportResxKeysCommand class
 
 namespace AzureAITranslationService
 {
@@ -26,6 +27,9 @@ namespace AzureAITranslationService
             base.InitializeServices(serviceCollection);
 
             // You can configure dependency injection here by adding services to the serviceCollection.
+
+            // Initialize the ExportResxKeysCommand
+            serviceCollection.AddSingleton<ExportResxKeysCommand>();
         }
     }
 }
