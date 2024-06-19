@@ -45,6 +45,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Constants\Constants.cs" />
     <Compile Include="Helpers\ExcelHelper.cs" />
     <Compile Include="Helpers\ResxFileReader.cs" />
     <Compile Include="Models\ResxEntry.cs" />
@@ -86,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\MyCommand.png" />
+    <Content Include="Resources\ResxSchema.txt" />
     <Content Include="Resources\SynchronizeLanguageFilesCommand.png" />
   </ItemGroup>
   <ItemGroup />
