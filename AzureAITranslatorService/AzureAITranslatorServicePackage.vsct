@@ -5,33 +5,27 @@
 
 	<Commands package="guidAzureAITranslatorServicePackage">
 		<Groups>
-			<Group guid="guidAzureAITranslatorServicePackageCmdSet" id="MyMenuGroup" priority="0x0600">
-				<Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
-			</Group>
-
 			<Group guid="guidAzureAITranslatorServicePackageCmdSet" id="MyResxGroup" priority="0x0700">
 				<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
 			</Group>
+			<Group guid="guidAzureAITranslatorServicePackageCmdSet" id="MyMenuGroup" priority="0x0600">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+			</Group>
 		</Groups>
-
 		<Buttons>
-			<Button guid="guidAzureAITranslatorServicePackageCmdSet" id="MyCommandId" priority="0x0100" type="Button">
-				<Parent guid="guidAzureAITranslatorServicePackageCmdSet" id="MyMenuGroup" />
-				<Icon guid="guidImages" id="bmpPic1" />
-				<Strings>
-					<ButtonText>Invoke My Command</ButtonText>
-				</Strings>
-			</Button>
-			
 			<Button guid="guidAzureAITranslatorServicePackageCmdSet" id="MyCommandId" priority="0x0100" type="Button">
 				<Parent guid="guidAzureAITranslatorServicePackageCmdSet" id="MyResxGroup" />
 				<Strings>
 					<ButtonText>Invoke My Command</ButtonText>
 				</Strings>
-				<CommandFlag>DynamicVisibility</CommandFlag>
+			</Button>
+			<Button guid="guidAzureAITranslatorServicePackageCmdSet" id="SynchronizeLanguageFilesCommandId" priority="0x0101" type="Button">
+				<Parent guid="guidAzureAITranslatorServicePackageCmdSet" id="MyResxGroup" />
+				<Strings>
+					<ButtonText>Synchronize Language Files</ButtonText>
+				</Strings>
 			</Button>
 		</Buttons>
-
 		<Bitmaps>
 			<Bitmap guid="guidImages" href="Resources\MyCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
 		</Bitmaps>
@@ -43,6 +37,7 @@
 			<IDSymbol name="MyMenuGroup" value="0x1020" />
 			<IDSymbol name="MyResxGroup" value="0x1030" />
 			<IDSymbol name="MyCommandId" value="0x0100" />
+			<IDSymbol name="SynchronizeLanguageFilesCommandId" value="0x0101" />
 		</GuidSymbol>
 		<GuidSymbol name="guidImages" value="{6631d4a5-27d3-4425-82e0-f5ed3f44c9c1}">
 			<IDSymbol name="bmpPic1" value="1" />

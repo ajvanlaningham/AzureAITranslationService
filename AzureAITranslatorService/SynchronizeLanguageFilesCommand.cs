@@ -12,43 +12,65 @@ using Task = System.Threading.Tasks.Task;
 
 namespace AzureAITranslatorService
 {
-    internal sealed class MyCommand
+    internal sealed class SynchronizeLanguageFilesCommand
     {
-        public const int CommandId = 0x0100;
+        public const int CommandId = 0x0101;
         public static readonly Guid CommandSet = new Guid("7250f60b-f2f2-4bef-b4b3-b5ef7dbbc866");
 
         private readonly AsyncPackage package;
 
-        private MyCommand(AsyncPackage package, OleMenuCommandService commandService)
+        private SynchronizeLanguageFilesCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new OleMenuCommand(this.Execute, menuCommandID);
-            menuItem.BeforeQueryStatus += MenuItem_BeforeQueryStatus;
             commandService.AddCommand(menuItem);
         }
 
-        public static MyCommand Instance { get; private set; }
+        public static SynchronizeLanguageFilesCommand Instance { get; private set; }
 
         private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider => this.package;
 
         public static async Task InitializeAsync(AsyncPackage package)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
-
             OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new MyCommand(package, commandService);
+            Instance = new SynchronizeLanguageFilesCommand(package, commandService);
         }
 
-        private void MenuItem_BeforeQueryStatus(object sender, EventArgs e)
+        private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var command = (OleMenuCommand)sender;
-
             var selectedItem = GetSelectedItem();
-            command.Visible = selectedItem != null && Path.GetExtension(selectedItem) == ".resx";
+            if (selectedItem == null) return;
+
+            string resxFilePath = selectedItem;
+            string targetLanguageFilePath = Path.ChangeExtension(resxFilePath, null) + "-fr.resx"; // Change the language code as needed
+
+            try
+            {
+                ResxSynchronizer.SynchronizeResxFiles(resxFilePath, targetLanguageFilePath);
+
+                VsShellUtilities.ShowMessageBox(
+                    this.package,
+                    $"Successfully synchronized resx files: {resxFilePath} and {targetLanguageFilePath}",
+                    "Synchronization Complete",
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
+            catch (Exception ex)
+            {
+                VsShellUtilities.ShowMessageBox(
+                    this.package,
+                    $"Failed to synchronize resx files. Error: {ex.Message}",
+                    "Error",
+                    OLEMSGICON.OLEMSGICON_CRITICAL,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
         }
 
         private string GetSelectedItem()
@@ -75,8 +97,8 @@ namespace AzureAITranslatorService
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            int hr = hierarchy.GetCanonicalName(itemid, out var fullPathObject);
-            if (hr != VSConstants.S_OK || fullPathObject == null)
+            hierarchy.GetCanonicalName(itemid, out var fullPathObject);
+            if (fullPathObject == null)
             {
                 VsShellUtilities.ShowMessageBox(
                     this.package,
@@ -88,52 +110,7 @@ namespace AzureAITranslatorService
                 return null;
             }
 
-            string fullPath = fullPathObject.ToString();
-            System.Diagnostics.Debug.WriteLine($"FullPath: {fullPath}");
-
-            return fullPath;
-        }
-
-        private void Execute(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var selectedItem = GetSelectedItem();
-            if (selectedItem == null) return;
-
-            string resxFilePath = selectedItem;
-
-            // Assuming the target language file path follows a convention based on the source file path
-            string targetLanguageFilePath = Path.ChangeExtension(resxFilePath, null) + "-fr.resx"; // Change the language code as needed
-
-            try
-            {
-                // Synchronize the resx files
-                ResxSynchronizer.SynchronizeResxFiles(resxFilePath, targetLanguageFilePath);
-
-                // Read the synchronized resx files
-                // var resxEntries = ResxFileReader.ReadResxFile(resxFilePath);
-
-                // Create the Excel file
-                // ExcelHelper.CreateExcelFile(resxFilePath, resxEntries);
-
-                VsShellUtilities.ShowMessageBox(
-                    this.package,
-                    $"Successfully synchronized and created Excel file for {resxFilePath}",
-                    "Export Complete",
-                    OLEMSGICON.OLEMSGICON_INFO,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
-            catch (Exception ex)
-            {
-                VsShellUtilities.ShowMessageBox(
-                    this.package,
-                    $"Failed to synchronize and create Excel file. Error: {ex.Message}",
-                    "Error",
-                    OLEMSGICON.OLEMSGICON_CRITICAL,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
+            return fullPathObject;
         }
     }
 }
