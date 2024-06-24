@@ -5,7 +5,9 @@ using System;
 using System.ComponentModel.Design;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
@@ -47,15 +49,37 @@ namespace AzureAITranslatorService
             if (selectedItem == null) return;
 
             string resxFilePath = selectedItem;
-            string targetLanguageFilePath = Path.ChangeExtension(resxFilePath, null) + "-fr.resx"; // Change the language code as needed
+            string directory = Path.GetDirectoryName(resxFilePath);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
+            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}-[a-zA-Z]{{2}}\\.resx$";
 
             try
             {
-                ResxSynchronizer.SynchronizeResxFiles(resxFilePath, targetLanguageFilePath);
+                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                var files = Directory.GetFiles(directory, "*.resx")
+                                     .Where(file => regex.IsMatch(Path.GetFileName(file)))
+                                     .ToArray();
+
+                if (files.Length == 0)
+                {
+                    VsShellUtilities.ShowMessageBox(
+                        this.package,
+                        $"No matching files found for pattern: {pattern}",
+                        "No Files Found",
+                        OLEMSGICON.OLEMSGICON_WARNING,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                    return;
+                }
+
+                foreach (var targetLanguageFilePath in files)
+                {
+                    ResxSynchronizer.SynchronizeResxFiles(resxFilePath, targetLanguageFilePath);
+                }
 
                 VsShellUtilities.ShowMessageBox(
                     this.package,
-                    $"Successfully synchronized resx files: {resxFilePath} and {targetLanguageFilePath}",
+                    $"Successfully synchronized resx files in directory: {directory}",
                     "Synchronization Complete",
                     OLEMSGICON.OLEMSGICON_INFO,
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
