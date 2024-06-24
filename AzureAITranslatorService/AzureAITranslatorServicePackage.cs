@@ -49,6 +49,7 @@ namespace AzureAITranslatorService
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await MyCommand.InitializeAsync(this);
             await SynchronizeLanguageFilesCommand.InitializeAsync(this);
+            await ExportTranslationsCommand.InitializeAsync(this);
         }
 
         #endregion
