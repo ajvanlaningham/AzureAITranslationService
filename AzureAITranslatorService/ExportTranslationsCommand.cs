@@ -1,8 +1,13 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Design;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
@@ -43,17 +48,94 @@ namespace AzureAITranslatorService
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            string title = "ExportTranslationsCommand";
+            var selectedItem = GetSelectedItem();
+            if (selectedItem == null) return;
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            string resxFilePath = selectedItem;
+            string directory = Path.GetDirectoryName(resxFilePath);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
+            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}-[a-zA-Z]{{2}}\\.resx$";
+
+            try
+            {
+                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                var files = Directory.GetFiles(directory, "*.resx")
+                                     .Where(file => regex.IsMatch(Path.GetFileName(file)))
+                                     .ToArray();
+
+                if (files.Length == 0)
+                {
+                    VsShellUtilities.ShowMessageBox(
+                        this.package,
+                        $"No matching files found for pattern: {pattern}",
+                        "No Files Found",
+                        OLEMSGICON.OLEMSGICON_WARNING,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                    return;
+                }
+
+                //ExcelTranslationsExporter.ExportTranslations(directory, files);
+
+                VsShellUtilities.ShowMessageBox(
+                    this.package,
+                    $"Successfully exported translations from resx files in directory: {directory}",
+                    "Synchronization Complete",
+                    OLEMSGICON.OLEMSGICON_INFO,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
+            catch (Exception ex)
+            {
+                VsShellUtilities.ShowMessageBox(
+                    this.package,
+                    $"Failed to export translations from resx files. Error: {ex.Message}",
+                    "Error",
+                    OLEMSGICON.OLEMSGICON_CRITICAL,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
+
+        }
+
+        private string GetSelectedItem()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var monitorSelection = ServiceProvider.GetServiceAsync(typeof(SVsShellMonitorSelection)).Result as IVsMonitorSelection;
+            if (monitorSelection == null) return null;
+
+            IVsMultiItemSelect multiItemSelect;
+            IntPtr hierarchyPtr, selectionContainerPtr;
+            uint itemid;
+            monitorSelection.GetCurrentSelection(out hierarchyPtr, out itemid, out multiItemSelect, out selectionContainerPtr);
+
+            if (itemid == VSConstants.VSITEMID_NIL) return null;
+
+            var hierarchy = Marshal.GetObjectForIUnknown(hierarchyPtr) as IVsHierarchy;
+            if (hierarchy == null) return null;
+
+            return GetItemFullPath(hierarchy, itemid);
+        }
+
+        private string GetItemFullPath(IVsHierarchy hierarchy, uint itemid)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            hierarchy.GetCanonicalName(itemid, out var fullPathObject);
+            if (fullPathObject == null)
+            {
+                VsShellUtilities.ShowMessageBox(
+                    this.package,
+                    "Failed to get the full path of the selected item.",
+                    "Error",
+                    OLEMSGICON.OLEMSGICON_CRITICAL,
+                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                return null;
+            }
+
+            return fullPathObject;
         }
     }
 }
