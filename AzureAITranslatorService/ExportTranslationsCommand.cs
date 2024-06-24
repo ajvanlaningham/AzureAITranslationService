@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio;
+﻿using AzureAITranslatorService.Services;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
@@ -75,7 +76,7 @@ namespace AzureAITranslatorService
                     return;
                 }
 
-                //ExcelTranslationsExporter.ExportTranslations(directory, files);
+                ExcelTranslationsExporter.ExportTranslations(directory, files);
 
                 VsShellUtilities.ShowMessageBox(
                     this.package,

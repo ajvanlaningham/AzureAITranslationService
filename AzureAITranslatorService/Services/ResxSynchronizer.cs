@@ -31,8 +31,8 @@ public static class ResxSynchronizer
     {
         try
         {
-            var sourceEntries = ReadResxFile(sourceResxPath);
-            var targetEntries = ReadResxFile(targetResxPath);
+            var sourceEntries = ResxFileReader.ReadResxFile(sourceResxPath);
+            var targetEntries = ResxFileReader.ReadResxFile(targetResxPath);
 
             var updatedTargetEntries = new OrderedDictionary();
 
@@ -60,24 +60,6 @@ public static class ResxSynchronizer
         }
     }
 
-    private static OrderedDictionary ReadResxFile(string resxPath)
-    {
-        var entries = new OrderedDictionary();
-        var xdoc = XDocument.Load(resxPath);
-
-        foreach (var data in xdoc.Root.Elements("data"))
-        {
-            var name = data.Attribute("name")?.Value;
-            var value = data.Element("value")?.Value ?? string.Empty;
-            var comment = data.Element("comment")?.Value ?? string.Empty;
-            if (name != null)
-            {
-                entries[name] = (value, comment);
-            }
-        }
-
-        return entries;
-    }
 
     private static void WriteResxFile(string resxPath, OrderedDictionary entries)
     {
