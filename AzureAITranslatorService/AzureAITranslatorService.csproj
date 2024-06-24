@@ -54,6 +54,7 @@
     <Compile Include="MyCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AzureAITranslatorServicePackage.cs" />
+    <Compile Include="Services\ExcelTranslationsExporter.cs" />
     <Compile Include="Services\ResxSynchronizer.cs" />
     <Compile Include="SynchronizeLanguageFilesCommand.cs" />
   </ItemGroup>
