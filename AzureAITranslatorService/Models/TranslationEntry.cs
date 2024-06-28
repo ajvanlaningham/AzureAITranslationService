@@ -12,5 +12,6 @@ namespace AzureAITranslatorService.Models
         public string SourceLanguage { get; set; }
         public string TargetLanguage { get; set; }
         public string Comment { get; set; }
+        public string TargetLanguageCode { get; set; }
     }
 }

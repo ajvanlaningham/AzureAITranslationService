@@ -1,36 +1,27 @@
-﻿using AzureAITranslatorService.Models;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Resources;
+﻿using System.Collections.Specialized;
+using System.Xml.Linq;
 
-public static class ResxFileReader
+public class ResxFileReader
 {
-    public static List<ResxEntry> ReadResxFile(string resxFilePath)
+    public ResxFileReader()
     {
-        var resxEntries = new List<ResxEntry>();
+    }
+    public static OrderedDictionary ReadResxFile(string resxPath)
+    {
+        var entries = new OrderedDictionary();
+        var xdoc = XDocument.Load(resxPath);
 
-        using (ResXResourceReader resxReader = new ResXResourceReader(resxFilePath))
+        foreach (var data in xdoc.Root.Elements("data"))
         {
-            resxReader.UseResXDataNodes = true; // This makes the reader return ResXDataNode objects
-
-            foreach (DictionaryEntry entry in resxReader)
+            var name = data.Attribute("name")?.Value;
+            var value = data.Element("value")?.Value ?? string.Empty;
+            var comment = data.Element("comment")?.Value ?? string.Empty;
+            if (name != null)
             {
-                var node = entry.Value as ResXDataNode;
-                string comment = node != null ? node.Comment : string.Empty;
-
-                var resxEntry = new ResxEntry
-                {
-                    Name = entry.Key.ToString(),
-                    Value = node != null ? node.GetValue((ITypeResolutionService)null).ToString() : entry.Value.ToString(),
-                    Comment = comment
-                };
-
-                resxEntries.Add(resxEntry);
+                entries[name] = (value, comment);
             }
         }
 
-        return resxEntries;
+        return entries;
     }
 }
