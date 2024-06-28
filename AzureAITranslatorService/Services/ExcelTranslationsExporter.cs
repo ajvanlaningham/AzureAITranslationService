@@ -1,10 +1,13 @@
 ﻿using AzureAITranslatorService.Models;
 using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell.Interop;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -28,76 +31,111 @@ namespace AzureAITranslatorService.Services
                 throw new InvalidOperationException("Source Language file not found");
             }
 
-            var sourceLanguageEntries  = ResxFileReader.ReadResxFile(sourceLanguageFile);
-            var targetLanguageEntriesList = new List<OrderedDictionary>();
+            var sourceLanguageEntries = ResxFileReader.ReadResxFile(sourceLanguageFile);
+            var targetLanguageEntriesDict = new Dictionary<string, OrderedDictionary>();
 
             foreach (var file in files)
             {
                 if (file != sourceLanguageFile)
                 {
                     var entries = ResxFileReader.ReadResxFile(file);
-                    targetLanguageEntriesList.Add(entries);
+                    var language = Path.GetFileNameWithoutExtension(file).Split('-').Last();
+                    targetLanguageEntriesDict[language] = entries;
                 }
             }
 
-            // flatten the targetLanguageEntriesList to a dictionary, or Imma be stuck in a mess of foreach loops
-            var targetEntries = new Dictionary<string, (string language, string value, string comment)>();
+            var translationEntriesList = CreateTranslationEntries(sourceLanguageEntries, targetLanguageEntriesDict);
 
-            foreach (var targetEntriesDict in targetLanguageEntriesList)
-            {
-                foreach (DictionaryEntry entry in targetEntriesDict) //kinda like this
-                {
-                    var (value, comment) = ((string value, string comment))entry.Value;
-                    var key = (string)entry.Key;
-                    var language = Path.GetFileNameWithoutExtension(files.First(file => targetEntriesDict == ResxFileReader.ReadResxFile(file))).Split('-').Last(); //lol
+            WriteToExcel(translationEntriesList, targetDirectoryPath);
+        }
 
-                    if (!targetEntries.ContainsKey(key))
-                    {
-                        targetEntries[key] = (language, value, comment);
-                    }
-                }
-            }
-
-            var  translationEntries = new List<TranslationEntry>();
+        private static List<TranslationEntry> CreateTranslationEntries(OrderedDictionary sourceLanguageEntries, Dictionary<string, OrderedDictionary> targetLanguageEntriesDict)
+        {
+            var translationEntriesList = new List<TranslationEntry>();
 
             foreach (DictionaryEntry sourceEntry in sourceLanguageEntries)
             {
                 var name = (string)sourceEntry.Key;
                 var (sourceValue, sourceComment) = ((string value, string comment))sourceEntry.Value;
 
-                if (sourceComment.ToLower() != "no translation")
+                foreach (var targetLanguage in targetLanguageEntriesDict.Keys)
                 {
-                    if (targetEntries.TryGetValue(name, out var entries))
+                    var targetEntries = targetLanguageEntriesDict[targetLanguage];
+                    if (targetEntries.Contains(name))
                     {
-                        var (targetLanguage, targetValue, targetComment) = entries;
-
-                        translationEntries.Add(new TranslationEntry
+                        var (targetValue, targetComment) = ((string value, string comment))targetEntries[name];
+                        translationEntriesList.Add(new TranslationEntry
                         {
                             Name = name,
                             SourceLanguage = sourceValue,
                             TargetLanguage = targetValue,
-                            Comment = sourceComment
+                            Comment = sourceComment,
+                            TargetLanguageCode = targetLanguage
                         });
                     }
                     else
                     {
-                        translationEntries.Add(new TranslationEntry
+                        translationEntriesList.Add(new TranslationEntry
                         {
                             Name = name,
                             SourceLanguage = sourceValue,
-                            TargetLanguage = string.Empty, //there was no translation for this value in the files...
-                            Comment = sourceComment
+                            TargetLanguage = string.Empty, // No translation for this value in the files
+                            Comment = "Missing from Sync",
+                            TargetLanguageCode = targetLanguage
                         });
                     }
                 }
             }
 
-            WriteToExcel(translationEntries);
+            return translationEntriesList;
         }
 
-        private static void WriteToExcel(List<TranslationEntry> translationEntries)
+        private static void WriteToExcel(List<TranslationEntry> translationEntriesList, string targetDirectoryPath)
         {
-            // TODO: Implement the logic to write translationEntries to an Excel file
+            var filePath = Path.Combine(targetDirectoryPath, "Translations.xlsx");
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                // Group the entries by target language code
+                var groupedEntries = translationEntriesList.GroupBy(te => te.TargetLanguageCode);
+
+                foreach (var group in groupedEntries)
+                {
+                    var languageCode = group.Key;
+                    var worksheet = package.Workbook.Worksheets.Add(languageCode);
+
+                    // Write headers
+                    worksheet.Cells[1, 1].Value = "Name";
+                    worksheet.Cells[1, 2].Value = "SourceLanguage";
+                    worksheet.Cells[1, 3].Value = "TargetLanguage";
+                    worksheet.Cells[1, 4].Value = "Comment";
+
+                    using (var range = worksheet.Cells[1, 1, 1, 4])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
+                    }
+
+                    // Write data
+                    var entries = group.ToList();
+                    for (int i = 0; i < entries.Count(); i++)
+                    {
+                        var entry = entries[i];
+                        worksheet.Cells[i + 2, 1].Value = entry.Name;
+                        worksheet.Cells[i + 2, 2].Value = entry.SourceLanguage;
+                        worksheet.Cells[i + 2, 3].Value = entry.TargetLanguage;
+                        worksheet.Cells[i + 2, 4].Value = entry.Comment;
+                    }
+
+                    worksheet.Cells.AutoFitColumns();
+                }
+
+                var file = new FileInfo(filePath);
+                package.SaveAs(file);
+            }
         }
 
         public static string FindSourceLanguageFile(string[] files)

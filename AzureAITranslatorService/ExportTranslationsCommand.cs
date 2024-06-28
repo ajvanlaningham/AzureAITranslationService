@@ -54,21 +54,17 @@ namespace AzureAITranslatorService
 
             string resxFilePath = selectedItem;
             string directory = Path.GetDirectoryName(resxFilePath);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
-            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}-[a-zA-Z]{{2}}\\.resx$";
 
             try
             {
-                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
                 var files = Directory.GetFiles(directory, "*.resx")
-                                     .Where(file => regex.IsMatch(Path.GetFileName(file)))
                                      .ToArray();
 
                 if (files.Length == 0)
                 {
                     VsShellUtilities.ShowMessageBox(
                         this.package,
-                        $"No matching files found for pattern: {pattern}",
+                        $"No matching files found for pattern: pattern",
                         "No Files Found",
                         OLEMSGICON.OLEMSGICON_WARNING,
                         OLEMSGBUTTON.OLEMSGBUTTON_OK,

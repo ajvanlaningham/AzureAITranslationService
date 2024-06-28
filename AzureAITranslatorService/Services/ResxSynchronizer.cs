@@ -48,7 +48,9 @@ public static class ResxSynchronizer
                 if (!targetEntries.Contains(entry.Key))
                 {
                     var valueTuple = ((string Value, string Comment))entry.Value;
-                    updatedTargetEntries[entry.Key] = (valueTuple.Value, "New");
+                    string targetComment = valueTuple.Comment.ToLower() == "no translation" ? valueTuple.Comment : "New";
+                    
+                    updatedTargetEntries[entry.Key] = (valueTuple.Value, targetComment);
                 }
             }
 
