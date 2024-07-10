@@ -60,7 +60,7 @@ namespace AzureAITranslatorService
                 {
                     VsShellUtilities.ShowMessageBox(
                         this.package,
-                        $"No matching files found for pattern: pattern",
+                        $"No matching files found in target directory.",
                         "No Files Found",
                         OLEMSGICON.OLEMSGICON_WARNING,
                         OLEMSGBUTTON.OLEMSGBUTTON_OK,

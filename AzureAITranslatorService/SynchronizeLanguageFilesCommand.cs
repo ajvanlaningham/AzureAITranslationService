@@ -51,7 +51,7 @@ namespace AzureAITranslatorService
             string resxFilePath = selectedItem;
             string directory = Path.GetDirectoryName(resxFilePath);
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
-            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}-[a-zA-Z]{{2}}\\.resx$";
+            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}{Constants.regexPathPattern}\\.resx$";
 
             try
             {
