@@ -8,6 +8,7 @@ public static class Constants
     //In the csproj file, the content resource must have the
     //<IncludeInVSIX>true</IncludeInVSIX> tag. 
     public static readonly string ResxSchemaPath = GetFilePath("Resources", "ResxSchema.txt");
+    public static string regexPathPattern = @"\.[a-zA-Z]{2}";
 
     private static string GetFilePath(params string[] paths)
     {

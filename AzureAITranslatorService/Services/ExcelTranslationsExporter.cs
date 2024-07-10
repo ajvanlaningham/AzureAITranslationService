@@ -39,7 +39,7 @@ namespace AzureAITranslatorService.Services
                 if (file != sourceLanguageFile)
                 {
                     var entries = ResxFileReader.ReadResxFile(file);
-                    var language = Path.GetFileNameWithoutExtension(file).Split('-').Last();
+                    var language = ExtractLanguageFromFileName(file);
                     targetLanguageEntriesDict[language] = entries;
                 }
             }
@@ -47,6 +47,12 @@ namespace AzureAITranslatorService.Services
             var translationEntriesList = CreateTranslationEntries(sourceLanguageEntries, targetLanguageEntriesDict);
 
             WriteToExcel(translationEntriesList, targetDirectoryPath);
+        }
+
+        private static string ExtractLanguageFromFileName(string fileName)
+        {
+            var parts = Path.GetFileNameWithoutExtension(fileName).Split('.');
+            return parts.Length > 1 ? parts[1] : string.Empty;
         }
 
         private static List<TranslationEntry> CreateTranslationEntries(OrderedDictionary sourceLanguageEntries, Dictionary<string, OrderedDictionary> targetLanguageEntriesDict)
@@ -69,7 +75,7 @@ namespace AzureAITranslatorService.Services
                             Name = name,
                             SourceLanguage = sourceValue,
                             TargetLanguage = targetValue,
-                            Comment = sourceComment,
+                            Comment = targetComment,
                             TargetLanguageCode = targetLanguage
                         });
                     }
@@ -143,7 +149,7 @@ namespace AzureAITranslatorService.Services
             foreach (var file in files)
             {
                 string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
-                string pattern = @"-[a-zA-Z]{2}$";
+                string pattern = Constants.regexPathPattern;
 
                 if (!Regex.IsMatch(fileNameWithoutExtension, pattern))
                 {
