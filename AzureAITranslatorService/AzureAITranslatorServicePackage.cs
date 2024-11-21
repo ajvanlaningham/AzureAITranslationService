@@ -50,6 +50,10 @@ namespace AzureAITranslatorService
             await MyCommand.InitializeAsync(this);
             await SynchronizeLanguageFilesCommand.InitializeAsync(this);
             await ExportTranslationsCommand.InitializeAsync(this);
+
+            var secretsService = new AzureAITranslatorService.Services.Implementations.SecretsService();
+            var translationService = new AzureAITranslatorService.Services.Implementations.TranslationService(secretsService);
+            await TranslateResourcesCommand.InitializeAsync(this, translationService);
         }
 
         #endregion

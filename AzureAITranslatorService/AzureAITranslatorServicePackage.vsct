@@ -27,6 +27,13 @@
 					<ButtonText>Export Translations</ButtonText>
 				</Strings>
 		  </Button>
+
+		<Button guid="guidAzureAITranslatorServicePackageCmdSet" id="TranslateResourceCommandId" priority="0x0100" type="Button">
+			<Parent guid="guidAzureAITranslatorServicePackageCmdSet" id="MyResxGroup" />
+			<Strings>
+				<ButtonText>Translate Resources</ButtonText>
+			</Strings>
+		</Button>
     </Buttons>
 		<Bitmaps>
 			<Bitmap guid="guidImages" href="Resources\MyCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
@@ -37,11 +44,13 @@
 	<Symbols>
 		<GuidSymbol name="guidAzureAITranslatorServicePackage" value="{df014775-8289-40ee-94c7-c841a06bcea3}" />
 		<GuidSymbol name="guidAzureAITranslatorServicePackageCmdSet" value="{7250f60b-f2f2-4bef-b4b3-b5ef7dbbc866}">
+		<GuidSymbol name="guidTranslateResourcesCommandSet" value="{8BBB2D0C-6A4F-405D-984B-39DACE1B8D33}" />
 			<IDSymbol name="MyMenuGroup" value="0x1020" />
 			<IDSymbol name="MyResxGroup" value="0x1030" />
 			<IDSymbol name="MyCommandId" value="0x0100" />
 			<IDSymbol name="SynchronizeLanguageFilesCommandId" value="0x0101" />
-		  <IDSymbol value="4145" name="cmdidExportTranslationsCommand" />
+			<IDSymbol name="cmdidExportTranslationsCommand" value="4145" />
+			<IDSymbol name="TranslateResourceCommandId" value="4147" />
     </GuidSymbol>
 		<GuidSymbol name="guidImages" value="{6631d4a5-27d3-4425-82e0-f5ed3f44c9c1}">
 			<IDSymbol name="bmpPic1" value="1" />
