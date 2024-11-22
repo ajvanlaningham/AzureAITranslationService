@@ -51,8 +51,16 @@ namespace AzureAITranslatorService.Services
 
         private static string ExtractLanguageFromFileName(string fileName)
         {
-            var parts = Path.GetFileNameWithoutExtension(fileName).Split('.');
-            return parts.Length > 1 ? parts[1] : string.Empty;
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+            var match = Regex.Match(fileNameWithoutExtension, Constants.LanguageCodePattern);
+            if (match.Success)
+            {
+                return match.Value.TrimStart('.');
+            }
+            else
+            {
+                return "other";
+            }
         }
 
         private static List<TranslationEntry> CreateTranslationEntries(OrderedDictionary sourceLanguageEntries, Dictionary<string, OrderedDictionary> targetLanguageEntriesDict)
@@ -85,7 +93,7 @@ namespace AzureAITranslatorService.Services
                         {
                             Name = name,
                             SourceLanguage = sourceValue,
-                            TargetLanguage = string.Empty, // No translation for this value in the files
+                            TargetLanguage = string.Empty, 
                             Comment = "Missing from Sync",
                             TargetLanguageCode = targetLanguage
                         });
@@ -104,7 +112,6 @@ namespace AzureAITranslatorService.Services
 
             using (var package = new ExcelPackage())
             {
-                // Group the entries by target language code
                 var groupedEntries = translationEntriesList.GroupBy(te => te.TargetLanguageCode);
 
                 foreach (var group in groupedEntries)
@@ -112,7 +119,6 @@ namespace AzureAITranslatorService.Services
                     var languageCode = group.Key;
                     var worksheet = package.Workbook.Worksheets.Add(languageCode);
 
-                    // Write headers
                     worksheet.Cells[1, 1].Value = "Name";
                     worksheet.Cells[1, 2].Value = "SourceLanguage";
                     worksheet.Cells[1, 3].Value = "TargetLanguage";
@@ -125,7 +131,6 @@ namespace AzureAITranslatorService.Services
                         range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
 
-                    // Write data
                     var entries = group.ToList();
                     for (int i = 0; i < entries.Count(); i++)
                     {
@@ -157,7 +162,7 @@ namespace AzureAITranslatorService.Services
                 }
             }
 
-            return null; // Return null if no source file is found
+            return null; 
         }
     }
 }

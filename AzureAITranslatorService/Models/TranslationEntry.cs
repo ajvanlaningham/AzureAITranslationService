@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace AzureAITranslatorService.Models
 {
-    public class TranslationEntry
+    public class TranslationEntry : ResxEntry
     {
-        public string Name { get; set; }
         public string SourceLanguage { get; set; }
         public string TargetLanguage { get; set; }
-        public string Comment { get; set; }
         public string TargetLanguageCode { get; set; }
     }
+
 }

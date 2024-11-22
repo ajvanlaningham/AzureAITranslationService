@@ -63,7 +63,7 @@ public static class ResxSynchronizer
     }
 
 
-    private static void WriteResxFile(string resxPath, OrderedDictionary entries)
+    public static void WriteResxFile(string resxPath, OrderedDictionary entries)
     {
         var doc = new XDocument(
             new XElement("root",
