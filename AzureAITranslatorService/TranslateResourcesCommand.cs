@@ -3,14 +3,11 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Design;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AzureAITranslatorService.Services;
-using System.Net.Http;
 
 namespace AzureAITranslatorService
 {
@@ -60,16 +57,12 @@ namespace AzureAITranslatorService
 
                 try
                 {
-                    // Extract the language code from the selected file
                     string targetLanguageCode = ExtractLanguageCodeFromFileName(resxFilePath);
 
-                    // Determine the source language code (you can adjust this as needed)
-                    string sourceLanguageCode = "en"; // Or extract from the file name if needed
+                    string sourceLanguageCode = "en"; 
 
-                    // Determine the target file path
                     string targetFilePath = GetTargetFilePath(resxFilePath, targetLanguageCode);
 
-                    // Translate the selected file
                     await translationService.TranslateFileAsync(resxFilePath, targetFilePath, targetLanguageCode, sourceLanguageCode);
 
                     VsShellUtilities.ShowMessageBox(
