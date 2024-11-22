@@ -7,7 +7,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Azure;
 using AzureAITranslatorService.Models;
 
 namespace AzureAITranslatorService.Services.Implementations
@@ -15,6 +17,8 @@ namespace AzureAITranslatorService.Services.Implementations
     public class TranslationService : ITranslationService
     {
         private readonly ISecretsService secretsService;
+        private static readonly HttpClient _client = new HttpClient();
+
 
         public TranslationService(ISecretsService secretsService)
         {
@@ -56,54 +60,69 @@ namespace AzureAITranslatorService.Services.Implementations
                 }
             }
 
-            // Step 3: Perform batch translation
-            if (entriesToTranslate.Count > 0)
-            {
-                var translatedValues = await TranslateTextBatchAsync(entriesToTranslate.Select(e => e.Value).ToList(), sourceLanguageCode, targetLanguageCode);
+            // Step 3: Translate the collected entries
+            var translatedValues = await TranslateTextBatchAsync(entriesToTranslate.Select(e => e.Value).ToList(), sourceLanguageCode, targetLanguageCode);
 
-                for (int i = 0; i < entriesToTranslate.Count; i++)
-                {
-                    var (name, _) = entriesToTranslate[i];
-                    translatedEntries[name] = (translatedValues[i], "Need Review");
-                }
+            // Step 4: Map the translations back to the entries
+            for (int i = 0; i < entriesToTranslate.Count; i++)
+            {
+                var (name, _) = entriesToTranslate[i];
+                translatedEntries[name] = (translatedValues[i], "Need Review");
             }
 
-            // Step 4: Write translated entries to target Resx file
+            // Step 5: Write the translated entries to the target Resx file
             ResxSynchronizer.WriteResxFile(targetFilePath, translatedEntries);
         }
 
+
+
         private async Task<List<string>> TranslateTextBatchAsync(List<string> texts, string sourceLanguage, string targetLanguage)
         {
-            var client = new HttpClient();
-            string endpoint = $"{secretsService.TranslatorEndpoint}/translate?api-version=3.0&from={sourceLanguage}&to={targetLanguage}";
-
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", secretsService.TranslatorKey);
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Region", secretsService.TranslatorRegion);
+            string endpoint = secretsService.TranslatorEndpoint; // Should be 'https://api.cognitive.microsofttranslator.com'
+            string route = $"/translate?api-version=3.0&from={sourceLanguage}&to={targetLanguage}";
 
             var requestBody = texts.Select(text => new { Text = text }).ToArray();
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody);
 
-            var response = await client.PostAsync(endpoint, content);
-            if (!response.IsSuccessStatusCode)
+            using (var request = new HttpRequestMessage())
             {
-                throw new InvalidOperationException($"Failed to translate text. Error: {response.ReasonPhrase}");
+                // Build the request
+                request.Method = HttpMethod.Post;
+                request.RequestUri = new Uri(endpoint + route);
+                request.Content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+                request.Headers.Add("Ocp-Apim-Subscription-Key", secretsService.TranslatorKey);
+                request.Headers.Add("Ocp-Apim-Subscription-Region", secretsService.TranslatorRegion);
+
+                // Send the request and get response
+                var response = await _client.SendAsync(request).ConfigureAwait(false);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException($"Failed to translate text. Status Code: {response.StatusCode}, Error: {error}");
+                }
+
+                // Deserialize the response
+                var translationResults = JsonSerializer.Deserialize<List<TranslationResult>>(responseBody);
+
+                // Extract the translated texts
+                return translationResults.Select(tr => tr.Translations.FirstOrDefault()?.Text ?? string.Empty).ToList();
             }
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var translationResults = JsonSerializer.Deserialize<List<TranslationResult>>(responseBody);
-
-            return translationResults.Select(tr => tr.Translations.FirstOrDefault()?.Text ?? string.Empty).ToList();
         }
 
-
-        private class TranslationResult
+        public class TranslationResult
         {
-            public List<TranslatedText> Translations { get; set; }
+            [JsonPropertyName("translations")]
+            public List<Translation> Translations { get; set; }
         }
 
-        private class TranslatedText
+        public class Translation
         {
+            [JsonPropertyName("text")]
             public string Text { get; set; }
+
+            [JsonPropertyName("to")]
             public string To { get; set; }
         }
     }

@@ -63,45 +63,36 @@ namespace AzureAITestProject.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Apple.
         /// </summary>
-        internal static string Apple_Test_Resource {
+        internal static string Apple_Test_String {
             get {
-                return ResourceManager.GetString("Apple_Test_Resource", resourceCulture);
+                return ResourceManager.GetString("Apple_Test_String", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Banana.
+        ///   Looks up a localized string similar to Peach.
         /// </summary>
-        internal static string Banana_Test_Resource {
+        internal static string Peach_Test_String {
             get {
-                return ResourceManager.GetString("Banana_Test_Resource", resourceCulture);
+                return ResourceManager.GetString("Peach_Test_String", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Kiwi.
+        ///   Looks up a localized string similar to Pear.
         /// </summary>
-        internal static string Kiwi_Test_Resource {
+        internal static string Pear_Test_String {
             get {
-                return ResourceManager.GetString("Kiwi_Test_Resource", resourceCulture);
+                return ResourceManager.GetString("Pear_Test_String", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Orange.
+        ///   Looks up a localized string similar to Pumpkin.
         /// </summary>
-        internal static string Orange_Test_Resource {
+        internal static string Pumpkin_Test_String {
             get {
-                return ResourceManager.GetString("Orange_Test_Resource", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Paw Paw.
-        /// </summary>
-        internal static string PawPaw_Test_Resource {
-            get {
-                return ResourceManager.GetString("PawPaw_Test_Resource", resourceCulture);
+                return ResourceManager.GetString("Pumpkin_Test_String", resourceCulture);
             }
         }
     }

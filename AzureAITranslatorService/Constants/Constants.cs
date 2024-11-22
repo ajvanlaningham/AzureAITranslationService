@@ -8,6 +8,13 @@ public static class Constants
     //In the csproj file, the content resource must have the
     //<IncludeInVSIX>true</IncludeInVSIX> tag. 
     public static readonly string ResxSchemaPath = GetFilePath("Resources", "ResxSchema.txt");
+    // Regex pattern to extract the base file name from a resource file
+    public const string BaseFileNamePattern = @"^(?<baseName>.*?)(\.[a-zA-Z]{2,5}(-[a-zA-Z]{2,5})?)?$";
+
+    public const string LanguageCodePattern = @"(\.[a-zA-Z]{2,5}(-[a-zA-Z]{2,5})?)$";
+
+    public const string ResxFilePattern = @"^{0}(\.[a-zA-Z]{{2,5}}(-[a-zA-Z]{{2,5}})?)?\.resx$";
+
     public static string regexPathPattern = @"\.[a-zA-Z]{2}";
 
     private static string GetFilePath(params string[] paths)

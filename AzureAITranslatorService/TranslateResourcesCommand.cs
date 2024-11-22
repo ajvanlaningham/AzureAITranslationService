@@ -10,13 +10,14 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AzureAITranslatorService.Services;
+using System.Net.Http;
 
 namespace AzureAITranslatorService
 {
     internal sealed class TranslateResourcesCommand
     {
-        public const int CommandId = 0x4147; // Matches TranslateResourceCommandId
-        public static readonly Guid CommandSet = new Guid("8BBB2D0C-6A4F-405D-984B-39DACE1B8D33");
+        public const int CommandId = 4147;
+        public static readonly Guid CommandSet = new Guid("7250f60b-f2f2-4bef-b4b3-b5ef7dbbc866");
 
         private readonly AsyncPackage package;
         private readonly ITranslationService translationService;
@@ -46,67 +47,82 @@ namespace AzureAITranslatorService
 
         private void Execute(object sender, EventArgs e)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var selectedItem = GetSelectedItem();
-            if (selectedItem == null) return;
-
-            string resxFilePath = selectedItem;
-            string directory = Path.GetDirectoryName(resxFilePath);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
-            string pattern = $"^{Regex.Escape(fileNameWithoutExtension)}{Constants.regexPathPattern}\\.resx$";
-
-            try
+            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
-                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
-                var files = Directory.GetFiles(directory, "*.resx")
-                                     .Where(file => regex.IsMatch(Path.GetFileName(file)))
-                                     .ToArray();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                if (files.Length == 0)
+                var selectedItem = GetSelectedItem();
+                if (selectedItem == null) return;
+
+                string resxFilePath = selectedItem;
+                string directory = Path.GetDirectoryName(resxFilePath);
+                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resxFilePath);
+
+                try
+                {
+                    // Extract the language code from the selected file
+                    string targetLanguageCode = ExtractLanguageCodeFromFileName(resxFilePath);
+
+                    // Determine the source language code (you can adjust this as needed)
+                    string sourceLanguageCode = "en"; // Or extract from the file name if needed
+
+                    // Determine the target file path
+                    string targetFilePath = GetTargetFilePath(resxFilePath, targetLanguageCode);
+
+                    // Translate the selected file
+                    await translationService.TranslateFileAsync(resxFilePath, targetFilePath, targetLanguageCode, sourceLanguageCode);
+
+                    VsShellUtilities.ShowMessageBox(
+                        this.package,
+                        $"Successfully translated {Path.GetFileName(resxFilePath)} to {targetLanguageCode}.",
+                        "Translation Complete",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                }
+                catch (Exception ex)
                 {
                     VsShellUtilities.ShowMessageBox(
                         this.package,
-                        $"No matching files found for pattern: {pattern}",
-                        "No Files Found",
-                        OLEMSGICON.OLEMSGICON_WARNING,
+                        $"Failed to translate resx file. Error: {ex.Message}",
+                        "Error",
+                        OLEMSGICON.OLEMSGICON_CRITICAL,
                         OLEMSGBUTTON.OLEMSGBUTTON_OK,
                         OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                    return;
                 }
-
-                foreach (var targetLanguageFilePath in files)
-                {
-                    string targetLanguageCode = ExtractLanguageCodeFromFileName(targetLanguageFilePath);
-                    translationService.TranslateFileAsync(resxFilePath, targetLanguageFilePath, targetLanguageCode)
-                        .GetAwaiter()
-                        .GetResult();
-                }
-
-                VsShellUtilities.ShowMessageBox(
-                    this.package,
-                    $"Successfully translated resx files in directory: {directory}",
-                    "Translation Complete",
-                    OLEMSGICON.OLEMSGICON_INFO,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
-            catch (Exception ex)
-            {
-                VsShellUtilities.ShowMessageBox(
-                    this.package,
-                    $"Failed to translate resx files. Error: {ex.Message}",
-                    "Error",
-                    OLEMSGICON.OLEMSGICON_CRITICAL,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
+            }).FileAndForget("AzureAITranslatorService.TranslateCommand");
         }
+
+        private string GetTargetFilePath(string sourceFilePath, string targetLanguageCode)
+        {
+            string directory = Path.GetDirectoryName(sourceFilePath);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(sourceFilePath);
+            string baseFileName = GetBaseFileName(fileNameWithoutExtension);
+
+            string targetFileName = $"{baseFileName}.{targetLanguageCode}.resx";
+            return Path.Combine(directory, targetFileName);
+        }
+
+
+        private string GetBaseFileName(string fileNameWithoutExtension)
+        {
+            var match = Regex.Match(fileNameWithoutExtension, Constants.BaseFileNamePattern);
+            return match.Groups["baseName"].Value;
+        }
+
 
         private string ExtractLanguageCodeFromFileName(string filePath)
         {
             string fileName = Path.GetFileNameWithoutExtension(filePath);
-            var match = Regex.Match(fileName, Constants.regexPathPattern);
-            return match.Success ? match.Value.TrimStart('.') : throw new InvalidOperationException("Target language code not found.");
+            var match = Regex.Match(fileName, Constants.LanguageCodePattern);
+            if (match.Success)
+            {
+                return match.Value.TrimStart('.');
+            }
+            else
+            {
+                throw new InvalidOperationException("Target language code not found in the file name.");
+            }
         }
 
         private string GetSelectedItem()

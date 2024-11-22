@@ -51,8 +51,16 @@ namespace AzureAITranslatorService.Services
 
         private static string ExtractLanguageFromFileName(string fileName)
         {
-            var parts = Path.GetFileNameWithoutExtension(fileName).Split('.');
-            return parts.Length > 1 ? parts[1] : string.Empty;
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+            var match = Regex.Match(fileNameWithoutExtension, Constants.LanguageCodePattern);
+            if (match.Success)
+            {
+                return match.Value.TrimStart('.');
+            }
+            else
+            {
+                return "other";
+            }
         }
 
         private static List<TranslationEntry> CreateTranslationEntries(OrderedDictionary sourceLanguageEntries, Dictionary<string, OrderedDictionary> targetLanguageEntriesDict)

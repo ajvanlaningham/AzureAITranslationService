@@ -70,24 +70,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Apple_Test_Resource" xml:space="preserve">
-    <value>Apple</value>
-    <comment>New</comment>
-  </data>
-  <data name="Banana_Test_Resource" xml:space="preserve">
-    <value>Banana</value>
-    <comment>New</comment>
-  </data>
-  <data name="Kiwi_Test_Resource" xml:space="preserve">
-    <value>Kiwi</value>
+  <data name="Pumpkin_Test_String" xml:space="preserve">
+    <value>Pumpkin</value>
     <comment>No Translation</comment>
   </data>
-  <data name="Orange_Test_Resource" xml:space="preserve">
-    <value>Orange</value>
-    <comment>New</comment>
+  <data name="Apple_Test_String" xml:space="preserve">
+    <value>Pomme</value>
+    <comment>Need Review</comment>
   </data>
-  <data name="PawPaw_Test_Resource" xml:space="preserve">
-    <value>Paw Paw</value>
-    <comment>New</comment>
+  <data name="Pear_Test_String" xml:space="preserve">
+    <value>Poire</value>
+    <comment>Need Review</comment>
+  </data>
+  <data name="Peach_Test_String" xml:space="preserve">
+    <value>Pêche</value>
+    <comment>Need Review</comment>
   </data>
 </root>
