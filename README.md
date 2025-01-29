@@ -16,7 +16,7 @@ A **Visual Studio extension** designed to streamline the translation of `.resx` 
 ## Installation
 1. Clone this repository:  
    ```sh
-   git clone https://github.com/yajvanlaningham/AzureAITranslationService.git
+   git clone https://github.com/ajvanlaningham/AzureAITranslationService.git
    cd AzureAITranslationService
    ```
 2. Open the project in **Visual Studio**.  
