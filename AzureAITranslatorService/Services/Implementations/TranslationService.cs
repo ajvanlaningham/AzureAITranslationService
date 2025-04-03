@@ -69,7 +69,7 @@ namespace AzureAITranslatorService.Services.Implementations
         private async Task<List<string>> TranslateTextBatchAsync(List<string> texts, string sourceLanguage, string targetLanguage)
         {
             string endpoint = secretsService.TranslatorEndpoint; 
-            string route = $"/translate?api-version=3.0&from={sourceLanguage}&to={targetLanguage}";
+            string route = $"translate?api-version=3.0&from={sourceLanguage}&to={targetLanguage}";
 
             var requestBody = texts.Select(text => new { Text = text }).ToArray();
             var jsonRequestBody = JsonSerializer.Serialize(requestBody);

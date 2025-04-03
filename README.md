@@ -41,8 +41,11 @@ To use **Azure AI translations**, configure your Azure AI credentials in `settin
 
 ```json
 {
-  "AzureAIEndpoint": "https://your-azure-ai-endpoint.cognitiveservices.azure.com/",
-  "SubscriptionKey": "your-subscription-key"
+  "TranslatorService": {
+    "Endpoint": "https://api.cognitive.microsofttranslator.com/",
+    "Key": "<your-key-here>",
+    "Region": "<region>"
+  }
 }
 ```
 
